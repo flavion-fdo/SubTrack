@@ -1,22 +1,10 @@
+const app = require('../backend/src/server');
 const { initDatabase } = require('../backend/src/config/db');
 
-// Cache the Express app and initialization state across warm invocations
-let initialized = false;
-let app;
+// Initialize database tables asynchronously on cold start
+initDatabase().catch(err => {
+  console.error('Cold-start DB initialization error:', err.message);
+});
 
-module.exports = async (req, res) => {
-  try {
-    if (!initialized) {
-      await initDatabase();
-      app = require('../backend/src/server');
-      initialized = true;
-    }
-    return app(req, res);
-  } catch (error) {
-    console.error('Vercel Serverless Function Error:', error);
-    return res.status(500).json({
-      message: error.message || 'Internal Server Error',
-      ok: false
-    });
-  }
-};
+// Export Express app directly so Vercel natively manages the serverless HTTP lifecycle
+module.exports = app;
