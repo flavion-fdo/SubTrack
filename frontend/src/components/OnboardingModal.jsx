@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getApiHost, safeParseJson } from '../utils/api';
 
-const OnboardingModal = ({ onComplete }) => {
+const OnboardingModal = ({ isOpen, onClose, onComplete }) => {
   const { user, fetchWithAuth } = useAuth();
   
   // Steps: 'consent' | 'popup' | 'scanning' | 'success' | 'manual'
@@ -38,12 +39,9 @@ const OnboardingModal = ({ onComplete }) => {
     setError('');
     try {
       const provider = user?.auth_provider || 'local';
-      const envUrl = import.meta.env.VITE_API_URL;
-      const apiHost = (envUrl !== undefined && envUrl !== null && envUrl !== '')
-        ? envUrl
-        : (import.meta.env.DEV ? 'http://localhost:5000' : '');
+      const apiHost = getApiHost();
       const res = await fetch(`${apiHost}/api/subscriptions/suggestions?provider=${provider}`);
-      const data = await res.json();
+      const data = await safeParseJson(res);
       setSuggestions(data);
 
       // Pre-select highlighted ones
@@ -83,11 +81,7 @@ const OnboardingModal = ({ onComplete }) => {
         body: JSON.stringify({ selectedKeys: Array.from(manualSelected) }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to add subscriptions');
-      }
-
+      await safeParseJson(res);
       onComplete();
     } catch (err) {
       setError(err.message || 'Something went wrong.');
@@ -152,12 +146,7 @@ const OnboardingModal = ({ onComplete }) => {
         body: JSON.stringify({ method: syncMethod, consent: true })
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Sync failed on server');
-      }
-
-      const data = await res.json();
+      const data = await safeParseJson(res);
       setDetectedSubs(data.subscriptions || []);
       setStep('success');
     } catch (err) {

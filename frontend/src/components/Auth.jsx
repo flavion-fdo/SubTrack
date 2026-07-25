@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-
-const getApiHost = () => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl !== undefined && envUrl !== null && envUrl !== '') {
-    return envUrl;
-  }
-  return import.meta.env.DEV ? 'http://localhost:5000' : '';
-};
+import { getApiHost, safeParseJson } from '../utils/api';
 
 const Auth = () => {
   const { login: saveAuth } = useAuth();
@@ -64,8 +57,7 @@ const Auth = () => {
         body: JSON.stringify({ credential: response.credential }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Google sign-in failed');
+      const data = await safeParseJson(res);
 
       setSuccess(data.isNewUser ? 'Account created!' : 'Welcome back!');
       setTimeout(() => {
@@ -113,8 +105,7 @@ const Auth = () => {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Google OAuth failed');
+      const data = await safeParseJson(res);
 
       setSuccess('Signed in with Google OAuth 2.0!');
       setTimeout(() => {
@@ -164,8 +155,7 @@ const Auth = () => {
           }),
         });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Apple sign-in failed');
+        const data = await safeParseJson(res);
 
         setSuccess(data.isNewUser ? 'Account created!' : 'Welcome back!');
         setTimeout(() => {
@@ -184,8 +174,7 @@ const Auth = () => {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Apple OAuth failed');
+      const data = await safeParseJson(res);
 
       setSuccess('Signed in with Apple OAuth 2.0!');
       setTimeout(() => {
@@ -235,11 +224,7 @@ const Auth = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Authentication failed.');
-      }
+      const data = await safeParseJson(response);
 
       setSuccess(isLogin ? 'Login successful!' : 'Registration successful!');
       

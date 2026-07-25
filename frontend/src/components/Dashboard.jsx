@@ -150,7 +150,7 @@ const Dashboard = () => {
     if (!window.confirm('Are you sure you want to delete this subscription?')) return;
     try {
       const res = await fetchWithAuth(`/api/subscriptions/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete subscription');
+      await parseJsonResponse(res);
       
       // Reload page data
       await loadData();
@@ -192,8 +192,7 @@ const Dashboard = () => {
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to save subscription');
+      await parseJsonResponse(res);
 
       setIsModalOpen(false);
       await loadData();
@@ -201,6 +200,7 @@ const Dashboard = () => {
       setModalError(err.message || 'Failed to save subscription.');
     }
   };
+
 
   // Category Color Map helper
   const categoryColors = {
