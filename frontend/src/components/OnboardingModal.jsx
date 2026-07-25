@@ -38,7 +38,10 @@ const OnboardingModal = ({ onComplete }) => {
     setError('');
     try {
       const provider = user?.auth_provider || 'local';
-      const apiHost = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const envUrl = import.meta.env.VITE_API_URL;
+      const apiHost = (envUrl !== undefined && envUrl !== null && envUrl !== '')
+        ? envUrl
+        : (import.meta.env.DEV ? 'http://localhost:5000' : '');
       const res = await fetch(`${apiHost}/api/subscriptions/suggestions?provider=${provider}`);
       const data = await res.json();
       setSuggestions(data);

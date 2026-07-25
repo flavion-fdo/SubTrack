@@ -42,7 +42,11 @@ export const AuthProvider = ({ children }) => {
 
   // Helper function to send API requests with authorization headers
   const fetchWithAuth = async (endpoint, options = {}) => {
-    const apiHost = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const envUrl = import.meta.env.VITE_API_URL;
+    const apiHost = (envUrl !== undefined && envUrl !== null && envUrl !== '')
+      ? envUrl
+      : (import.meta.env.DEV ? 'http://localhost:5000' : '');
+      
     const url = `${apiHost}${endpoint}`;
     
     const headers = {
