@@ -166,7 +166,7 @@ SubTrack Alert Engine
     }
   }
 
-  // Fallback logging
+  // Fallback: log to console (always works, captured by Vercel/serverless log systems)
   const logMessage = `
 ========================================
 TIMESTAMP: ${new Date().toISOString()}
@@ -177,12 +177,16 @@ ${textContent}
 ========================================
 \n`;
 
+  console.log(`[MOCK EMAIL] Alert for: ${toEmail} (${service_name})`);
+
+  // Also try file logging for local development (silently skip on serverless)
   try {
     fs.appendFileSync(logFilePath, logMessage, 'utf8');
-    console.log(`[MOCK EMAIL] Alert logged to alerts.log for: ${toEmail} (${service_name})`);
-    return true;
-  } catch (error) {
-    console.error('Failed to write mock email to alerts.log:', error);
-    return false;
+    console.log(`[MOCK EMAIL] Alert also logged to alerts.log`);
+  } catch {
+    // File write not available in serverless environments — console log above is sufficient
   }
+
+  return true;
 };
+

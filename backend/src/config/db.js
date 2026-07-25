@@ -1,53 +1,63 @@
-const sqlite3 = require('sqlite3');
+const { createClient } = require('@libsql/client');
 const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
-const dbFile = process.env.DATABASE_FILE || 'database.sqlite';
-const dbPath = path.resolve(__dirname, '../../', dbFile);
+// ─── Database Client ────────────────────────────────────────────────────────
+// Uses Turso (remote LibSQL) in production, local SQLite file in development.
+// @libsql/client speaks the same SQL dialect as SQLite, so all existing
+// queries work without modification.
 
-// Create SQLite connection
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error connecting to SQLite database:', err.message);
-  } else {
-    console.log(`Connected to SQLite database at: ${dbPath}`);
-  }
+const isRemote = !!process.env.TURSO_DATABASE_URL;
+
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL || `file:${path.resolve(__dirname, '../../database.sqlite')}`,
+  authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// Promisified helper functions for SQLite
-const dbRun = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve({ id: this.lastID, changes: this.changes });
-    });
-  });
+console.log(`Connected to database: ${isRemote ? 'Turso (remote)' : 'SQLite (local file)'}`);
+
+// ─── Promisified Helper Functions ───────────────────────────────────────────
+// These maintain the same interface as the previous sqlite3 wrappers so that
+// all existing controllers/services continue to work unchanged.
+
+const dbRun = async (sql, params = []) => {
+  const result = await client.execute({ sql, args: params });
+  return {
+    id: result.lastInsertRowid != null ? Number(result.lastInsertRowid) : 0,
+    changes: result.rowsAffected
+  };
 };
 
-const dbGet = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+const dbGet = async (sql, params = []) => {
+  const result = await client.execute({ sql, args: params });
+  const row = result.rows[0];
+  // Convert to plain object for consistent behavior with JSON serialization
+  return row ? Object.assign({}, row) : undefined;
 };
 
-const dbAll = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
+const dbAll = async (sql, params = []) => {
+  const result = await client.execute({ sql, args: params });
+  // Convert each Row to a plain object
+  return result.rows.map(row => Object.assign({}, row));
 };
 
-// Initialize Database Tables
+// ─── Initialize Database Tables ─────────────────────────────────────────────
+// Uses CREATE TABLE IF NOT EXISTS, so safe to call on every cold start.
+
+let dbInitialized = false;
+
 const initDatabase = async () => {
+  if (dbInitialized) return;
+
   try {
-    // Enable Write-Ahead Logging (WAL) for concurrency optimization
-    await dbRun('PRAGMA journal_mode=WAL;');
+    // Enable WAL mode for local SQLite (ignored by Turso remote)
+    if (!isRemote) {
+      try {
+        await dbRun('PRAGMA journal_mode=WAL;');
+      } catch {
+        // WAL pragma not supported on remote — safe to ignore
+      }
+    }
 
     // 1. Users Table (password nullable for OAuth users)
     await dbRun(`
@@ -121,14 +131,16 @@ const initDatabase = async () => {
       await dbRun("ALTER TABLE alert_history ADD COLUMN alert_type TEXT NOT NULL DEFAULT 'custom'");
     }
 
+    dbInitialized = true;
     console.log('Database tables initialized successfully.');
   } catch (error) {
     console.error('Failed to initialize database tables:', error);
+    throw error;
   }
 };
 
 module.exports = {
-  db,
+  client,
   dbRun,
   dbGet,
   dbAll,

@@ -6,31 +6,36 @@
   --bg-card: rgba(20, 30, 48, 0.65);
   --border-color: rgba(255, 255, 255, 0.06);
   --border-focus: rgba(99, 102, 241, 0.4);
-  
+
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  
-  --color-primary: #6366f1; /* Indigo */
+
+  --color-primary: #6366f1;
+  /* Indigo */
   --color-primary-hover: #4f46e5;
   --color-primary-glow: rgba(99, 102, 241, 0.15);
-  
-  --color-accent: #14b8a6; /* Teal */
+
+  --color-accent: #14b8a6;
+  /* Teal */
   --color-accent-glow: rgba(20, 184, 166, 0.15);
-  
-  --color-success: #10b981; /* Emerald */
-  --color-danger: #f43f5e; /* Rose */
-  --color-warning: #f59e0b; /* Amber */
-  
+
+  --color-success: #10b981;
+  /* Emerald */
+  --color-danger: #f43f5e;
+  /* Rose */
+  --color-warning: #f59e0b;
+  /* Amber */
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  
+
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 20px;
-  
+
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -45,7 +50,7 @@
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
-  background-image: 
+  background-image:
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.08) 0px, transparent 50%);
   color: var(--text-primary);
@@ -59,7 +64,9 @@ a {
   text-decoration: none;
 }
 
-button, input, select {
+button,
+input,
+select {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
@@ -97,6 +104,7 @@ button, input, select {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -463,10 +471,21 @@ button, input, select {
   border-radius: 50%;
 }
 
-.dot-entertainment { background: var(--color-primary); }
-.dot-software { background: var(--color-accent); }
-.dot-utilities { background: var(--color-warning); }
-.dot-other { background: var(--text-muted); }
+.dot-entertainment {
+  background: var(--color-primary);
+}
+
+.dot-software {
+  background: var(--color-accent);
+}
+
+.dot-utilities {
+  background: var(--color-warning);
+}
+
+.dot-other {
+  background: var(--text-muted);
+}
 
 .category-name {
   font-size: 14px;
@@ -619,10 +638,25 @@ button, input, select {
   font-weight: 500;
 }
 
-.cat-Entertainment { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
-.cat-Software { background: rgba(20, 184, 166, 0.12); color: #2dd4bf; }
-.cat-Utilities { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
-.cat-Other { background: rgba(255, 255, 255, 0.06); color: #cbd5e1; }
+.cat-Entertainment {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+}
+
+.cat-Software {
+  background: rgba(20, 184, 166, 0.12);
+  color: #2dd4bf;
+}
+
+.cat-Utilities {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+
+.cat-Other {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
 
 .renewal-warning {
   color: var(--color-warning);
@@ -697,8 +731,13 @@ button, input, select {
 }
 
 @keyframes fadeInOverlay {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -714,6 +753,7 @@ button, input, select {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -801,13 +841,10 @@ button, input, select {
   flex-shrink: 0;
 }
 
-/* Logout button variants — desktop shows text, mobile shows icon */
-.btn-logout-text {
-  /* shown by default on desktop */
-}
-
+/* Logout button variants — desktop: .btn-logout-text shown, mobile: .btn-logout-icon shown */
 .btn-logout-icon {
-  display: none; /* hidden on desktop */
+  display: none;
+  /* hidden on desktop */
   color: var(--text-secondary);
   font-size: 18px;
 }
@@ -989,9 +1026,19 @@ button, input, select {
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .onboarding-title {
@@ -1074,7 +1121,9 @@ button, input, select {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Onboarding Grid */
@@ -1478,7 +1527,8 @@ button, input, select {
     -webkit-overflow-scrolling: touch;
     gap: 12px;
     padding: 0 14px;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   .metric-card {
@@ -1489,7 +1539,8 @@ button, input, select {
   }
 
   .metric-card:hover {
-    transform: none; /* disable hover lift on touch */
+    transform: none;
+    /* disable hover lift on touch */
   }
 
   .metric-label {
@@ -1625,6 +1676,7 @@ button, input, select {
       opacity: 0;
       transform: translateY(100%);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -1886,9 +1938,17 @@ button, input, select {
   border-radius: 50%;
 }
 
-.popup-dot-red { background: #ff5f56; }
-.popup-dot-yellow { background: #ffbd2e; }
-.popup-dot-green { background: #27c93f; }
+.popup-dot-red {
+  background: #ff5f56;
+}
+
+.popup-dot-yellow {
+  background: #ffbd2e;
+}
+
+.popup-dot-green {
+  background: #27c93f;
+}
 
 .simulated-popup-body {
   padding: 30px;
@@ -1952,9 +2012,17 @@ button, input, select {
 }
 
 @keyframes scan {
-  0% { top: 0%; }
-  50% { top: 100%; }
-  100% { top: 0%; }
+  0% {
+    top: 0%;
+  }
+
+  50% {
+    top: 100%;
+  }
+
+  100% {
+    top: 0%;
+  }
 }
 
 .scanner-progress-wrapper {
@@ -2038,8 +2106,15 @@ button, input, select {
 }
 
 @keyframes popScale {
-  0% { transform: scale(0.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .sync-success-list {
@@ -2090,4 +2165,3 @@ button, input, select {
   color: var(--text-muted);
   text-align: right;
 }
-

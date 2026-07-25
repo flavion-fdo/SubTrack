@@ -120,7 +120,13 @@ const checkRenewals = async () => {
 };
 
 // Setup background cron job to run every hour at minute 0
+// In production (Vercel), this is a no-op — Vercel Cron Jobs handle scheduling instead.
 const startAlertEngine = () => {
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Alert Engine: Running on Vercel — background cron disabled (using Vercel Cron Jobs instead).');
+    return;
+  }
+
   // Cron: '0 * * * *' -> Runs every hour at the top of the hour
   cron.schedule('0 * * * *', async () => {
     const hour = new Date().getHours();
@@ -144,3 +150,4 @@ module.exports = {
   checkRenewals,
   startAlertEngine
 };
+

@@ -64,23 +64,28 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize database and start server
-const startServer = async () => {
-  try {
-    // 1. Initialise database tables
-    await initDatabase();
+// Initialize database and start server (only when running directly, not via Vercel)
+if (require.main === module) {
+  const startServer = async () => {
+    try {
+      // 1. Initialise database tables
+      await initDatabase();
 
-    // 2. Start the alert engine cron jobs
-    startAlertEngine();
+      // 2. Start the alert engine cron jobs (local dev only; Vercel uses Cron Jobs)
+      startAlertEngine();
 
-    // 3. Start Express server listener
-    app.listen(PORT, () => {
-      console.log(`SubTrack backend server running on port: ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
+      // 3. Start Express server listener
+      app.listen(PORT, () => {
+        console.log(`SubTrack backend server running on port: ${PORT}`);
+      });
+    } catch (error) {
+      console.error('Failed to start server:', error);
+      process.exit(1);
+    }
+  };
 
-startServer();
+  startServer();
+}
+
+// Export for Vercel serverless function
+module.exports = app;
