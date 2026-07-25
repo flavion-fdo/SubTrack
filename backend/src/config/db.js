@@ -4,45 +4,73 @@ require('dotenv').config();
 
 // ─── Database Client ────────────────────────────────────────────────────────
 // Uses Turso (remote LibSQL) in production, local SQLite file in development.
-// @libsql/client speaks the same SQL dialect as SQLite, so all existing
-// queries work without modification.
+// On Vercel without Turso env vars, uses temporary /tmp/database.sqlite to prevent read-only filesystem errors.
 
 const isRemote = !!process.env.TURSO_DATABASE_URL;
 
+const getDbUrl = () => {
+  if (process.env.TURSO_DATABASE_URL) {
+    return process.env.TURSO_DATABASE_URL;
+  }
+  if (process.env.VERCEL) {
+    return 'file:/tmp/database.sqlite';
+  }
+  return `file:${path.resolve(__dirname, '../../database.sqlite')}`;
+};
+
 const client = createClient({
-  url: process.env.TURSO_DATABASE_URL || `file:${path.resolve(__dirname, '../../database.sqlite')}`,
-  authToken: process.env.TURSO_AUTH_TOKEN,
+  url: getDbUrl(),
+  authToken: process.env.TURSO_AUTH_TOKEN || undefined,
 });
 
-console.log(`Connected to database: ${isRemote ? 'Turso (remote)' : 'SQLite (local file)'}`);
+console.log(`Connected to database: ${isRemote ? 'Turso (remote)' : 'SQLite (local/tmp file)'}`);
 
 // ─── Promisified Helper Functions ───────────────────────────────────────────
-// These maintain the same interface as the previous sqlite3 wrappers so that
-// all existing controllers/services continue to work unchanged.
 
 const dbRun = async (sql, params = []) => {
-  const result = await client.execute({ sql, args: params });
-  return {
-    id: result.lastInsertRowid != null ? Number(result.lastInsertRowid) : 0,
-    changes: result.rowsAffected
-  };
+  try {
+    const result = await client.execute({ sql, args: params });
+    return {
+      id: result.lastInsertRowid != null ? Number(result.lastInsertRowid) : 0,
+      changes: result.rowsAffected
+    };
+  } catch (err) {
+    console.error('dbRun Error:', err.message);
+    if (err.message && err.message.includes('401')) {
+      throw new Error('Database authentication failed (HTTP 401). Please check TURSO_AUTH_TOKEN in Vercel Environment Variables.');
+    }
+    throw err;
+  }
 };
 
 const dbGet = async (sql, params = []) => {
-  const result = await client.execute({ sql, args: params });
-  const row = result.rows[0];
-  // Convert to plain object for consistent behavior with JSON serialization
-  return row ? Object.assign({}, row) : undefined;
+  try {
+    const result = await client.execute({ sql, args: params });
+    const row = result.rows[0];
+    return row ? Object.assign({}, row) : undefined;
+  } catch (err) {
+    console.error('dbGet Error:', err.message);
+    if (err.message && err.message.includes('401')) {
+      throw new Error('Database authentication failed (HTTP 401). Please check TURSO_AUTH_TOKEN in Vercel Environment Variables.');
+    }
+    throw err;
+  }
 };
 
 const dbAll = async (sql, params = []) => {
-  const result = await client.execute({ sql, args: params });
-  // Convert each Row to a plain object
-  return result.rows.map(row => Object.assign({}, row));
+  try {
+    const result = await client.execute({ sql, args: params });
+    return result.rows.map(row => Object.assign({}, row));
+  } catch (err) {
+    console.error('dbAll Error:', err.message);
+    if (err.message && err.message.includes('401')) {
+      throw new Error('Database authentication failed (HTTP 401). Please check TURSO_AUTH_TOKEN in Vercel Environment Variables.');
+    }
+    throw err;
+  }
 };
 
 // ─── Initialize Database Tables ─────────────────────────────────────────────
-// Uses CREATE TABLE IF NOT EXISTS, so safe to call on every cold start.
 
 let dbInitialized = false;
 
@@ -50,16 +78,15 @@ const initDatabase = async () => {
   if (dbInitialized) return;
 
   try {
-    // Enable WAL mode for local SQLite (ignored by Turso remote)
     if (!isRemote) {
       try {
         await dbRun('PRAGMA journal_mode=WAL;');
       } catch {
-        // WAL pragma not supported on remote — safe to ignore
+        // WAL pragma not supported on remote/mem — safe to ignore
       }
     }
 
-    // 1. Users Table (password nullable for OAuth users)
+    // 1. Users Table
     await dbRun(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,7 +100,7 @@ const initDatabase = async () => {
       )
     `);
 
-    // Migration: add columns if upgrading from older schema
+    // Migration for users
     const cols = await dbAll("PRAGMA table_info(users)");
     const colNames = cols.map(c => c.name);
     if (!colNames.includes('auth_provider')) {
@@ -105,7 +132,6 @@ const initDatabase = async () => {
       )
     `);
 
-    // Migration for subscriptions: add alert_days_before column if it doesn't exist
     const subCols = await dbAll("PRAGMA table_info(subscriptions)");
     const subColNames = subCols.map(c => c.name);
     if (!subColNames.includes('alert_days_before')) {
@@ -124,7 +150,6 @@ const initDatabase = async () => {
       )
     `);
 
-    // Migration for alert_history: add alert_type column if it doesn't exist
     const alertCols = await dbAll("PRAGMA table_info(alert_history)");
     const alertColNames = alertCols.map(c => c.name);
     if (!alertColNames.includes('alert_type')) {
@@ -134,8 +159,8 @@ const initDatabase = async () => {
     dbInitialized = true;
     console.log('Database tables initialized successfully.');
   } catch (error) {
-    console.error('Failed to initialize database tables:', error);
-    throw error;
+    console.error('Failed to initialize database tables:', error.message);
+    // Don't re-throw fatal error on initialization so app can start and return proper JSON API errors
   }
 };
 

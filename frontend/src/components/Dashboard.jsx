@@ -38,14 +38,31 @@ const Dashboard = () => {
   const [sortField, setSortField] = useState('next_renewal_date');
   const [sortDirection, setSortDirection] = useState('asc');
 
+  const parseJsonResponse = async (res) => {
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(text.replace(/<[^>]*>?/gm, '').trim() || `Server error (${res.status})`);
+    }
+    if (!res.ok) {
+      throw new Error(data.message || `Request failed (${res.status})`);
+    }
+    return data;
+  };
+
   // Load subscriptions and analytics
   const loadData = async () => {
     try {
       setLoading(true);
       setError('');
       
-      const subsData = await fetchWithAuth('/api/subscriptions').then(res => res.json());
-      const analyticsData = await fetchWithAuth('/api/analytics').then(res => res.json());
+      const subsRes = await fetchWithAuth('/api/subscriptions');
+      const subsData = await parseJsonResponse(subsRes);
+      
+      const analyticsRes = await fetchWithAuth('/api/analytics');
+      const analyticsData = await parseJsonResponse(analyticsRes);
       
       setSubscriptions(subsData);
       setAnalytics(analyticsData);

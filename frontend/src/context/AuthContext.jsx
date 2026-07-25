@@ -64,7 +64,6 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (response.status === 401) {
-      // Token expired or invalid, auto logout
       logout();
       throw new Error('Session expired. Please log in again.');
     }
